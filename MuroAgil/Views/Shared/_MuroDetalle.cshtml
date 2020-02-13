@@ -1,0 +1,28 @@
+﻿@using MuroAgil.Models
+@model Muro
+
+<table class="table table-bordered" style="width: inherit; margin: 0px; background: rgb(255, 255, 255);">
+    <thead>
+        <tr>
+            @foreach (var etapa in Model.Etapa) {
+            <th style="text-align: center; color: #404040; vertical-align: top; font-size: small;">
+                @etapa.Nombre
+                @if (ViewData["Editable"].ToString() == "true") {
+                    <div style="margin-top: 8px;">
+                        <button type="button" class="btn btn-primary agregar" style="width: 6em; float: right; font-size: 12px; padding: 3px 8px;" onClick="agregarCard(@etapa.Id)">
+                            Agregar
+                        </button>
+                    </div>
+                }
+            </th>
+            }
+        </tr>
+    </thead>
+    <tbody id="tablaEtapas">
+        @{  ViewData["Tamanno"] = Model.Etapa.Count();
+            foreach (var etapa in Model.Etapa) {
+                @Html.Partial("_EtapaDetalle", etapa);
+            }
+        }
+    </tbody>
+</table>

@@ -1,0 +1,21 @@
+﻿@using MuroAgil.Models
+@model Tarea
+
+@{ 
+    var detalleTareaEditable = "";
+    if (ViewData["Editable"].ToString() == "true") {
+        detalleTareaEditable = "detalleTareaEditable";
+    }
+}
+
+<div id="tarea_@Model.Id" class="tareaCard card text-left sortable p-0 @detalleTareaEditable" style="font-size: small;" onclick="mostrarDetalle(@{@Model.Id})">
+    <div class="card-header text-center py-1 px-3">
+        <span id="tarea_@{@Model.Id}_tit_span">@Model.Titulo</span>
+        <input type="hidden" id="tarea_@{@Model.Id}_familia" value="@Model.Familia"/>
+    </div>
+    <div class="card-body pt-1 pb-2 px-3">
+        <div>
+            <span id="tarea_@{@Model.Id}_des_span">@Model.Descripcion</span>
+        </div>
+    </div>
+</div>

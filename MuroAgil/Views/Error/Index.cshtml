@@ -1,0 +1,17 @@
+﻿@{
+    ViewBag.Title = "¡Ocurrió un Error!";
+}
+
+<div class="card text-white bg-danger" style="margin: 0 auto;">
+    <div class="card-header">
+        <strong>¡Ocurrió un Error!</strong>
+    </div>
+    <div class="card-body text-dark bg-light">
+        @if (ViewBag.ClaseError == "MuroAgil.Others.ExcepcionMuroAgil") {
+            <p class="card-text">@ViewBag.Message</p>
+        } else {
+            <p class="card-text">Ocurrió un error inesperado, favor intente más tarde.</p>
+        }
+    </div>
+</div>
+

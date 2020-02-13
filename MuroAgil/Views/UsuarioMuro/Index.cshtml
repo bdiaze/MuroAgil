@@ -1,0 +1,528 @@
+﻿@model IEnumerable<MuroAgil.Models.UsuarioMuro>
+@{
+    ViewBag.Title = "Mis Muros - Muro Ágil";
+}
+
+<div class="card border-primary">
+    <div class="card-header text-white bg-primary" style="padding-top: 7px; padding-bottom: 7px;">
+        <div style="display: inline-block; height: 100%; vertical-align: middle;">
+            <strong>Mis Muros</strong>
+        </div>
+        <a asp-controller="Muro" asp-action="EditarMuro" id="btnCrear" class="btn btn-success" role="button" style="width: 8em; float: right; font-size: 14px; margin: 0px; padding: 3px;">Crear Muro</a>
+        <!-- <input id="btnCrear" type="button" onClick="confirmarCreacion()" class="btn btn-success" value="Crear Muro" style="width: 8em; float: right; font-size: 14px; margin: 0px; padding: 3px;" /> -->
+    </div>
+    <div class="card-body">
+        <table id="tablaMuros" class="table table-bordered table-striped" style="margin-bottom: 0px; width: 100%;">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Permiso</th>
+                    <th>Dueño</th>
+                    <th>Fecha Creación</th>
+                    <th>Fecha Actualización</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var usuarioMuro in Model) {
+                    <tr>
+                        <td><a asp-controller="Muro" asp-action="Index" asp-route-id="@usuarioMuro.IdMuro">@usuarioMuro.IdMuroNavigation.Nombre</a></td>
+                        <td>@usuarioMuro.NombrePermiso()</td>
+                        <td>@usuarioMuro.IdDuennoNavigation.Correo</td>
+                        <td>@usuarioMuro.IdMuroNavigation.FechaCreacion.ToString("dd/MM/yyy HH:mm:ss")</td>
+                        <td>@usuarioMuro.IdMuroNavigation.FechaUltimaModificacion.ToString("dd/MM/yyy HH:mm:ss")</td>
+                        <td style="padding: 0px; padding-bottom: 4px;">
+                            <!-- <a asp-controller="Muro" asp-action="Index" asp-route-id="@usuarioMuro.IdMuro" class="btn btn-success" role="button" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Ver</a> -->
+                            @if (usuarioMuro.Permiso == 1) {
+                                <a asp-controller="UsuarioMuro" asp-action="Permisos" asp-route-id="@usuarioMuro.IdMuro" class="btn btn-info" role="button" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Permisos</a>
+                                <a asp-controller="Muro" asp-action="EditarMuro" asp-route-id="@usuarioMuro.IdMuro" class="btn btn-warning" role="button" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Modificar</a>
+                                <!-- <button type="button" onClick="confirmarModificacion(@usuarioMuro.IdMuro, '@usuarioMuro.IdMuroNavigation.Nombre')" class="btn btn-warning" data-dismiss="modal" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Modificar</button> -->
+                                <button type="button" onClick="confirmarEliminacion(@usuarioMuro.IdMuro)" class="btn btn-danger" data-dismiss="modal" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Eliminar</button>
+                            } else {
+                                <button type="button" onClick="confirmarRenuncia(@usuarioMuro.IdMuro)" class="btn btn-danger" data-dismiss="modal" style="width: 6em; font-size: 12px; padding: 3px 8px; margin-top: 4px;">Renunciar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="crearMuro" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Creación de un Muro Ágil</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input id="nombreMuro" class="form-control" maxlength="255" placeholder="Nombre del Muro..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button type="button" class="btn btn-primary" style="width: 8em;" onclick="crearMuro()">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Creación en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la creación del nuevo muro, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoExitoso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Creación Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El muro ha sido creado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoFallido" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Creación!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al crear el muro, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificarMuro" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modificación de un Muro Ágil</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nombre del Muro:</label>
+                    <input id="nombreMuroModificacion" class="form-control" maxlength="255" placeholder="Nombre del Muro..." />
+                    <input id="idMuroModificacion" type="hidden" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button type="button" class="btn btn-warning" style="width: 8em;" onclick="modificarMuro()">Modificar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modificación en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la modificación del muro seleccionado, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionExitosa" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Modificación Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El muro ha sido modificado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionFallida" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Modificación!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al modificar el muro, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="seguroEliminar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Atención! Eliminación en Proceso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea eliminar el muro seleccionado?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button id="aceptarEliminacion" type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminacionEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Eliminación en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la eliminación del muro seleccionado, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminadoExitoso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Eliminación Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El muro ha sido eliminado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminadoFallido" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Eliminación!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al eliminar el muro seleccionado, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="seguroRenunciar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Atención! Renuncia de Permisos en Proceso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea renunciar a sus permisos del muro seleccionado? <br/> No podrá volver a acceder al muro, hasta que el dueño le de nuevos permisos.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button id="aceptarRenuncia" type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="renunciaEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Renuncia en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la renuncia de sus permisos del muro seleccionado, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="renunciaExitosa" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Renuncia Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Ha renunciado a sus permisos del muro seleccionado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="renunciaFallida" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Renuncia!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al renunciar a sus permisos del muro seleccionado, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#grabadoExitoso").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $("#modificacionExitosa").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $("#eliminadoExitoso").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $("#renunciaExitosa").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $(document).ready(function () {
+        $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+        var tabla = $("#tablaMuros").DataTable({
+            language: {
+                lengthMenu: "_MENU_ muros por página.",
+                zeroRecords: "No se encontró muros asociados a la búsqueda...",
+                info: "Página _PAGE_ de _PAGES_",
+                infoEmpty: "No hay muros registrados en el sistema...",
+                infoFiltered: "(Resultado obtenido de un total de _MAX_ muros).",
+                search: "Buscar:",
+                paginate: {
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            },
+            dom: "<'cabecera'<'paginacionSup'l><'filtro'f>>rt<'paginacionInf'p>",
+            columns: [
+                { className: "text-center align-middle" },
+                { className: "text-center align-middle" },
+                { className: "text-center align-middle" },
+                { className: "text-center align-middle" },
+                { className: "text-center align-middle" },
+                { className: "text-center align-middle", orderable: false }
+            ],
+            scrollX: true,
+            order: [[4, "desc"]]
+        });
+        $(".cabecera")
+            .css("width", "100%")
+            .css("padding-top", "1px");
+        $(".paginacionSup")
+            .css("display", "inline-block")
+            .css("float", "right")
+            .css("padding-top", "5px");
+        $(".filtro")
+            .css("display", "inline-block")
+            .css("padding-top", "3px")
+            .css("float", "left");
+        $(".paginacionInf")
+            .css("float", "right")
+            .css("padding-bottom", "5px");
+    });
+
+    function confirmarCreacion() {
+        $("#crearMuro").modal("show");
+        $("#nombreMuro").select();
+    }
+
+    function crearMuro() {
+        var nombre = $("#nombreMuro").val().trim();
+
+        if (nombre.length == 0) {
+            return;
+        }
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#grabadoEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#grabadoExitoso").modal("show");
+                } else {
+                    $("#grabadoFallido").modal("show");
+                }
+            }
+        };
+        xhttp.open("POST", "/UsuarioMuro/Grabar", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $('#crearMuro').modal('hide');
+        $("#grabadoEnProceso").modal("show");
+        xhttp.send("nombre=" + encodeURIComponent(nombre));
+    }
+
+    function confirmarModificacion(id, nombre) {
+        $("#nombreMuroModificacion").val(nombre);
+        $("#idMuroModificacion").val(id);
+        $("#modificarMuro").modal("show");
+        $("#nombreMuroModificacion").select();
+    }
+
+    function modificarMuro() {
+        var idMuro = $("#idMuroModificacion").val();
+        var nombreMuro = $("#nombreMuroModificacion").val().trim();
+
+        if (nombreMuro.length == 0) {
+            return;
+        }
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#modificacionEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#modificacionExitosa").modal("show");
+                } else {
+                    $("#modificacionFallida").modal("show");
+                }
+            }
+        };
+        xhttp.open("POST", "/UsuarioMuro/Modificar", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $("#modificarMuro").modal("hide");
+        $("#modificacionEnProceso").modal("show");
+        xhttp.send("id=" + encodeURIComponent(idMuro) + "&nombre=" + encodeURIComponent(nombreMuro));
+    }
+
+    function confirmarEliminacion(id) {
+        $("#aceptarEliminacion").unbind("click").click(function () {
+            eliminarMuro(id);
+        });
+        $("#seguroEliminar").modal("show");
+    }
+
+    function eliminarMuro(id) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#eliminacionEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#eliminadoExitoso").modal("show");
+                } else {
+                    $("#eliminadoFallido").modal("show");
+                }
+            }
+        };
+        xhttp.open("POST", "/UsuarioMuro/Eliminar", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $("#eliminacionEnProceso").modal("show");
+        xhttp.send("id=" + encodeURIComponent(id));
+    }
+
+    function confirmarRenuncia(id) {
+        $("#aceptarRenuncia").unbind("click").click(function () { 
+            renunciarPermisos(id);
+        });
+        $("#seguroRenunciar").modal("show");
+    }
+
+    function renunciarPermisos(id) {
+        var salidaJSON = { idMuro: id };
+
+        $("#renunciaEnProceso").modal("show");
+        $.ajax({
+            type: "POST",
+            url: "/UsuarioMuro/Renunciar",
+            data: salidaJSON,
+            success: function (data, textStatus, jqXHR) {
+                $("#renunciaEnProceso").modal("hide");
+                $("#renunciaExitosa").modal("show");
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                $("#renunciaEnProceso").modal("hide");
+                $("#renunciaFallida").modal("show");
+            }
+        });
+    }
+</script>

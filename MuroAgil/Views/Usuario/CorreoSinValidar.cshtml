@@ -1,0 +1,26 @@
+﻿@model MuroAgil.ViewModels.CorreoSinValidarViewModel
+
+@{
+    ViewBag.Title = "Correo Electrónico Sin Validar - Muro Ágil";
+}
+
+<div class="card text-white bg-danger" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header">
+        <strong>¡Correo Sin Verificar!</strong>
+    </div>
+    <div class="card-body text-dark bg-light">
+        <form asp-action="EnviarCorreoVerificacion" method="post">
+            <p class="card-text">
+                Para iniciar sesión es necesario validar tu correo electrónico.
+            </p>
+            <div class="form-group">
+                <input class="form-control" asp-for="Correo" readonly />
+                <span asp-validation-for="Correo"></span>
+            </div>
+            <p class="card-text">
+                ¿Deseas que te enviemos un nuevo correo de verificación?
+            </p>
+            <input type="submit" style="width: 100%;" class="btn btn-success" value="¡Enviar Correo!" />
+        </form>
+    </div>
+</div>

@@ -1,0 +1,765 @@
+﻿@using MuroAgil.Models
+@model UsuarioMuro
+@{
+    ViewBag.Title = Model.IdMuroNavigation.Nombre + " - Muro Ágil";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="UsuarioMuro" asp-action="Index">Mis Muros</a></li>
+        <li id="nombreMuroBreadcrumb" class="breadcrumb-item active" aria-current="page">@Model.IdMuroNavigation.Nombre</li>
+    </ol>
+</nav>
+
+<div id="contenedorDetalleMuro" class="card border-primary">
+    <div class="card-header text-white bg-primary align-items-center">
+        <strong id="nombreMuroTitulo">@Model.IdMuroNavigation.Nombre</strong>
+        <input id="idMuro" type="hidden" value="@Model.IdMuroNavigation.Id"/>
+        <input id="fechaModificacionMuro" type="hidden" value="@Model.IdMuroNavigation.FechaUltimaModificacion.ToString("yyyyMMddHHmmss")"/> 
+        <div id="grabandoCambios" style="display: none; float: right;" >
+            <img src="~/Content/imagenes/loading.gif" alt="Grabando..." height="20" width="20" />
+            <h6 style="display: inline; vertical-align: middle;">Grabando...</h6>
+        </div>
+    </div>
+    <div class="card-body" style="width: 100%;">
+        <div id="contenedorScrollbar" class="scrollbar scrollbar-primary">
+            <table class="table table-bordered" style="width: inherit; margin: 0px; background: rgb(255, 255, 255);">
+                <thead id="headTablaEtapas">
+                    <tr>
+                    </tr>
+                </thead>
+                <tbody id="bodyTablaEtapas">
+                    <tr>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="detalleTarea" tabindex="-1" role="dialog" aria-labelledby="detalleTextoTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleTextoTitulo"></h5>
+                <textarea id="detalleInputTitulo" class="form-control" maxlength="255" rows="1" placeholder="Título de la Tarea..."></textarea>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" tabindex="-1">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <input id="detalleID" type="hidden" value="" />
+            </div>
+            <div class="modal-body">
+                <span id="detalleTextoDescripcion"></span>
+                <textarea id="detalleInputDescripcion" class="form-control" rows="6" placeholder="Descripción de la Tarea..."></textarea>
+                <div id="alertaTareaModificada" style="display: none; font-size: .75rem;" class="alert alert-danger p-2 mb-0 mt-2" role="alert">
+                    <b>Advertencia:</b><br/>
+                    La tarea fue modificada por otra persona, ¿Desea recargar la información?
+                    <br/>
+                    <div style="text-align: center;">
+                        <button style="font-size: .75rem;" onclick="recargarInfoTarea();" type="button" class="btn btn-link p-0">Click aquí para recargar...</button>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Permiso < 3) {
+            <div class="modal-footer">
+                <div id="detalleBotonesPrincipales">
+                    <button type="button" class="btn btn-danger" style="width: 8em;" onclick="detalleEliminar()">Eliminar</button>
+                    <button type="button" class="btn btn-primary" style="width: 8em;" onclick="detalleModificar()">Modificar</button>
+                </div>
+                <div id="contenedorDetalleFamilia" class="colorPickSelector"></div>
+                <div id="detalleBotonesEdicion" style="width:100%; text-align: right;">
+                    <button type="button" class="btn btn-secondary" style="width: 8em;"  data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" style="width: 8em;" onclick="detalleAceptar()">Aceptar</button>
+                </div>
+            </div>
+             }
+        </div>
+    </div>
+</div>
+
+<div id="tarea_NUMERO_X" class="tareaCard card text-left bg-light sortable p-0 detalleTareaEditable" style="display: none; font-size: small; position: relative; left: 0px; top: 0px;">
+    <div class="card-header text-center py-1 px-3">
+        <span id="tarea_NUMERO_X_tit_span"></span>
+        <input type="hidden" id="tarea_NUMERO_X_familia" value="8" />
+    </div>
+    <div class="card-body pt-1 pb-2 px-3">
+        <div>
+            <span id="tarea_NUMERO_X_des_span"></span>
+        </div>
+    </div>
+</div>
+
+@if (Model.Permiso < 3) {
+    <div class="modal" id="grabadoFallido" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">¡Error al Grabar!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Hubo un error al grabar los datos, intente más tarde.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="seguroEliminar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">¡Atención! Eliminación en Proceso</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar la tarea seleccionada?
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelarEliminacion" type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                    <button id="aceptarEliminacion" type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        var grabadoEnDeuda = false;
+        var optionSortable = {
+            connectWith: ".etapa",
+            cursor: "pointer",
+            revert: false,
+            scroll: true,
+            scrollSpeed: 10,
+            //containment: "#contenedorDetalleMuro",
+            tolerance: "pointer",
+            update: function (event, ui) {
+                if (this === ui.item.parent()[0]) {
+                    grabarDatos();
+                }
+            },
+            start: function (event, ui) {
+                /*$("html, body").animate({
+                    scrollTop: $("#contenedorDetalleMuro").offset().top
+                }, 1000);*/
+                //ui.helper.css('margin-left', $("#contenedorScrollbar").scrollLeft);
+                //ui.originalPosition.left = 12;
+                //ui.helper.css('left', ui.originalPosition.left);
+                //ui.item.css('left', ui.originalPosition.left);
+                //alert(ui.originalPosition.left);
+                //alert($("#contenedorScrollbar").scrollLeft());
+                //alert(ui.item.left);
+                //alert(ui.item.css('left'));
+                var altura = ui.item.height();
+                //$("bodyTablaEtapas").children("tr").css("padding-bottom");
+            }
+        };
+        //$(".etapa").sortable(optionSortable);
+                
+        $(".colorPickSelector").colorPick({
+            initialColor: "#bdc3c7",
+            onColorSelected: function () {
+                this.element.css({
+                    background: this.color,
+                    color: this.color
+                });
+            },
+            allowRecent: false,
+            paletteLabel: "Color",
+            palette: ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#f1c40f", "#e67e22", "#e74c3c", "#bdc3c7"],
+        });
+        
+        function grabarDatos() {
+            if ($("#grabandoCambios").css("display") != "none") {
+                grabadoEnDeuda = true;
+                return;
+            }
+
+            var salidaJSON = {IdMuro : @Model.IdMuro, ListaTareas : []};
+            $(".etapa").each(function (indexEtapa, etapa) {
+                var idEtapa = $(etapa).attr("id").split("_")[1];
+                $(etapa).children().each(function (indexTarea, tarea) {
+                    var tareaJSON = {
+                        IdEtapa: null,
+                        IdTarea: null,
+                        TituloTarea: null,
+                        DescripcionTarea: null,
+                        Posicion: null,
+                        Familia: null,
+                        Red: null,
+                        Green: null,
+                        Blue: null
+                    };
+
+                    tareaJSON.IdEtapa = parseInt(idEtapa, 10);
+                    tareaJSON.IdTarea = parseInt($(tarea).attr("id").split("_")[1], 10);
+                    tareaJSON.TituloTarea = $("#" + $(tarea).attr("id") + "_tit_span").html().replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">");
+                    tareaJSON.DescripcionTarea = $("#" + $(tarea).attr("id") + "_des_span").html().replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">");
+                    tareaJSON.Posicion = indexTarea + 1;
+                    tareaJSON.Familia = $("#" + $(tarea).attr("id") + "_familia").val();
+                    var rgb = colorStringToRGBNumbers($(tarea).find(".card-header").css("background-color"));
+                    tareaJSON.Red = rgb[0];
+                    tareaJSON.Green = rgb[1];
+                    tareaJSON.Blue = rgb[2];
+
+                    salidaJSON.ListaTareas.push(tareaJSON);
+                });
+            });
+            
+            $.ajax({
+                type: "POST",
+                url: "/Muro/Grabar",
+                data: salidaJSON,
+                beforeSend: function (jqXHR) {
+                    $("#grabandoCambios").css("display", "inline");
+                    grabandoDatos = true;
+                },
+                success: function (data, textStatus, jqXHR) {
+                    reconfigurarIds(data);
+
+                    if (grabadoEnDeuda) {
+                        grabadoEnDeuda = false;
+                        grabarDatos();
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $("#grabadoFallido").modal("show");
+                },
+                complete: function (jqXHR, textStatus) {
+                    $("#grabandoCambios").css("display", "none");
+                    grabandoDatos = false;
+                }
+            });
+        }
+
+        function reconfigurarIds(infoIds) {
+            var listaIds = infoIds.trim().split("|");
+            for (var i = 0; i < listaIds.length; i++) {
+                if (listaIds[i].indexOf("-") != -1) {
+                    var pseudoId = listaIds[i].split("-")[0].trim();
+                    var idReal = listaIds[i].split("-")[1].trim();
+
+                    var tarea = $("#tarea_" + pseudoId);
+                    var regExp = new RegExp("tarea_" + pseudoId + "_", "g");
+                    $(tarea).html($(tarea).html().replace(regExp, "tarea_" + idReal + "_"));
+                    $(tarea).attr("id", "tarea_" + idReal);
+                    $(tarea).attr("onclick", "mostrarDetalle(" + idReal + ")");
+                }
+            }
+        }
+
+        function agregarCard(etapa) {
+            var idDisponible = 1;
+            $(".etapa").children().each(function (index, element) {
+                if ($(element).attr("id").split("_")[1] >= idDisponible) {
+                    idDisponible = parseInt($(element).attr("id").split("_")[1], 10) + 1;
+                }
+            });
+
+            modificarSinDetalle(idDisponible, etapa);
+        }
+
+        function detalleEliminar() {
+            var id = $("#detalleID").val();
+
+            $("#aceptarEliminacion").attr("onclick", "eliminarTarea(" + id + ")");
+            $("#cancelarEliminacion").attr("onclick", "mostrarDetalle(" + id + ")");
+
+            $("#detalleTarea").modal("hide");
+            $("#seguroEliminar").modal("show");
+        }
+
+        function eliminarTarea(id) {
+            $("#tarea_" + id).remove();
+            grabarDatos();
+        }
+
+        function detalleModificar() {
+            var titulo = $("#detalleTextoTitulo").html();
+            var descripcion = $("#detalleTextoDescripcion").html();
+
+            $("#detalleTextoTitulo").css("display", "none");
+            $("#detalleInputTitulo").val(titulo.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+            $("#detalleInputTitulo").css("display", "inline");
+
+            $("#detalleTextoDescripcion").css("display", "none");
+            $("#detalleInputDescripcion").val(descripcion.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+            $("#detalleInputDescripcion").css("display", "inline");
+
+            $("#contenedorDetalleFamilia").css("display", "");
+
+            $("#detalleBotonesPrincipales").css("display", "none");
+            $("#detalleBotonesEdicion").css("display", "inline");
+
+            $("#detalleInputTitulo").select();
+        }
+
+        function modificarSinDetalle(id, idEtapa) {
+            var titulo = "";
+            var descripcion = "";
+            var familia = 12;
+
+            $("#detalleID").val(id);
+            $("#detalleID").attr("idEtapa", idEtapa);
+
+            $("#detalleTextoTitulo").css("display", "none");
+            $("#detalleTextoTitulo").html(titulo);
+            $("#detalleInputTitulo").val(titulo.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+            $("#detalleInputTitulo").css("display", "inline");
+
+            $("#detalleTextoDescripcion").css("display", "none");
+            $("#detalleTextoDescripcion").html(descripcion);
+            $("#detalleInputDescripcion").val(descripcion.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+            $("#detalleInputDescripcion").css("display", "inline");
+
+            $("#contenedorDetalleFamilia").css("display", "");
+            $("#contenedorDetalleFamilia").css("background-color", familiaAColor(familia));
+
+            $("#detalleBotonesPrincipales").css("display", "none");
+            $("#detalleBotonesEdicion").css("display", "inline");
+
+            $("#detalleTarea").modal("show");
+            $("#detalleInputTitulo").select();
+        }
+        
+        function detalleAceptar() {
+            var id = $("#detalleID").val();
+            var titulo = $("#detalleInputTitulo").val().trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            var descripcion = $("#detalleInputDescripcion").val().trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            var familia = colorAFamilia($("#contenedorDetalleFamilia").css("background-color"));
+
+            var datosErroneos = false;
+            if (descripcion.length == 0) {
+                $("#detalleInputDescripcion").addClass("is-invalid");
+                $("#detalleInputDescripcion").select();
+                datosErroneos = true;
+            } else {
+                $("#detalleInputDescripcion").removeClass("is-invalid");
+            }
+
+            if (titulo.length == 0) {
+                $("#detalleInputTitulo").addClass("is-invalid");
+                $("#detalleInputTitulo").select();
+                datosErroneos = true;
+            } else {
+                $("#detalleInputTitulo").removeClass("is-invalid");
+            }
+
+            if (datosErroneos) {
+                return;
+            }
+
+            if ($("#tarea_" + id + "_tit_span").length == 0) {
+                var nuevaTarea = $("#tarea_NUMERO_X").clone();
+                $(nuevaTarea).html($(nuevaTarea).html().replace(/NUMERO_X/g, id));
+                $(nuevaTarea).attr("id", $(nuevaTarea).attr("id").replace(/NUMERO_X/g, id));
+                $(nuevaTarea).attr("onclick", "mostrarDetalle(" + id + ")");
+                $(nuevaTarea).css("display", "");
+                $(nuevaTarea).prependTo("#etapa_" + $("#detalleID").attr("idEtapa"));
+            }
+
+            $("#tarea_" + id + "_tit_span").html(titulo);
+            $("#tarea_" + id + "_des_span").html(descripcion);
+            $("#tarea_" + id + "_familia").val(familia);
+        
+            cambiarColorCard(id, familiaAColor(familia));
+
+            $("#detalleInputTitulo").css("display", "none");
+            $("#detalleTextoTitulo").css("display", "inline");
+
+            $("#detalleInputDescripcion").css("display", "none");
+            $("#detalleTextoDescripcion").css("display", "inline");
+
+            $("#contenedorDetalleFamilia").css("display", "none");
+
+            $("#detalleBotonesEdicion").css("display", "none");
+            $("#detalleBotonesPrincipales").css("display", "inline");
+
+            $("#detalleTarea").modal("hide");
+            
+            grabarDatos();
+        }
+        
+    </script>
+}
+
+<script>
+    $(document).ready(function () {
+        solicitarInformacionActualizada();
+    });
+
+    $("#detalleTarea").on("hidden.bs.modal", function () {
+        $("#alertaTareaModificada").css("display", "none");
+        $("#detalleInputTitulo").removeClass("is-invalid");
+        $("#detalleInputDescripcion").removeClass("is-invalid");
+    });
+
+    var consultandoFechaModificacion = false;
+    var consultandoInfoActualizada = false;
+    var grabandoDatos = false;
+    $(function () {
+        setInterval(function () {
+            if (!consultandoFechaModificacion && !consultandoInfoActualizada && !grabandoDatos) {
+                $.ajax({
+                    type: "GET",
+                    url: "/Muro/ObtenerFechaModificacion",
+                    data: { "idMuro": $("#idMuro").val() },
+                    dataType: "json",
+                    beforeSend: function (jqXHR) {
+                        consultandoFechaModificacion = true;
+                    },
+                    success: function (data, textStatus, jqXHR) {
+                        if (data.value != $("#fechaModificacionMuro").val()) {
+                            solicitarInformacionActualizada();
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+
+                    },
+                    complete: function (jqXHR, textStatus) {
+                        consultandoFechaModificacion = false;
+                    }
+                });
+            }
+        }, 5000);
+    });
+
+    function solicitarInformacionActualizada() {
+        $.ajax({
+            type: "GET",
+            url: "/Muro/ObtenerInfoActualizada",
+            data: { "idMuro": $("#idMuro").val() },
+            dataType: "json",
+            beforeSend: function (jqXHR) {
+                consultandoInfoActualizada = true;
+            },
+            success: function (data, textStatus, jqXHR) {
+                actualizarInfoPantalla(data.value);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+
+            },
+            complete: function (jqXHR, textStatus) {
+                consultandoInfoActualizada = false;
+            }
+        });
+    }
+
+    function actualizarInfoPantalla(jsonMuro) {
+        $("#nombreMuroBreadcrumb").html(jsonMuro.nombre);
+        $("#fechaModificacionMuro").val(jsonMuro.fechaUltimaModificacion);
+        $("#nombreMuroTitulo").html(jsonMuro.nombre);
+
+        var posScroll = $(window).scrollTop();
+        var posScrollTable = $(".scrollbar").scrollTop();
+
+        // Se eliminan las etapas de la pantalla...
+        $("#headTablaEtapas").find("th").remove();
+        $("#bodyTablaEtapas").find("td").remove();
+
+        //Se calcula el ancho de cada etapa...
+        var tamanno = 100;
+        if (jsonMuro.etapas.length > 0) {
+            tamanno = 100 / jsonMuro.etapas.length;
+        }
+
+        // Se agregan las nuevas etapas a la pantalla...
+        for (var i = 0; i < jsonMuro.etapas.length; i++) {
+            var jsonEtapa = jsonMuro.etapas[i];
+
+            var nuevaEtapaHead = $("<th></th>");
+            nuevaEtapaHead.css("text-align", "center");
+            nuevaEtapaHead.css("color", "#404040");
+            nuevaEtapaHead.css("vertical-align", "top");
+            nuevaEtapaHead.css("font-size", "small");
+            nuevaEtapaHead.css("position", "relative");
+            //nuevaEtapaHead.css("position", "sticky");
+            //nuevaEtapaHead.css("position", "-webkit-sticky");
+            //nuevaEtapaHead.css("top", "0px");
+            nuevaEtapaHead.css("background", "white");
+            //nuevaEtapaHead.css("border", "1px solid #dee2e6");
+            nuevaEtapaHead.css("z-index", "10");
+            nuevaEtapaHead.html(jsonEtapa.nombre);
+            if (jsonMuro.permiso < 3) {
+                var buttonEtapaHead = $("<button></button>");
+                buttonEtapaHead.attr("type", "button");
+                buttonEtapaHead.addClass("btn btn-link");
+                buttonEtapaHead.css("font-size", "25px");
+                buttonEtapaHead.css("font-weight", "bold");
+                buttonEtapaHead.css("text-decoration", "none");
+                buttonEtapaHead.css("padding", "0px 5px 0px 5px");
+                buttonEtapaHead.css("position", "absolute");
+                buttonEtapaHead.css("right", "10px");
+                buttonEtapaHead.css("top", "0px");
+                buttonEtapaHead.attr("onclick", "agregarCard(" + jsonEtapa.id + ")");
+                buttonEtapaHead.html("+");
+                nuevaEtapaHead.append(buttonEtapaHead);
+            }
+
+            var nuevaEtapaBody = $("<td></td>");
+            nuevaEtapaBody.attr("id", "etapa_" + jsonEtapa.id);
+            nuevaEtapaBody.addClass("etapa");
+            nuevaEtapaBody.css("width", tamanno + "%");
+            nuevaEtapaBody.css("min-width", "15em");
+            nuevaEtapaBody.css("position", "relative");
+
+            $("#headTablaEtapas").find("tr").append(nuevaEtapaHead);
+            $("#bodyTablaEtapas").find("tr").append(nuevaEtapaBody);
+
+            // Se agregan las nuevas tareas a la pantalla...
+            for (var j = 0; j < jsonEtapa.tareas.length; j++) {
+                var jsonTarea = jsonEtapa.tareas[j];
+
+                var nuevaTarea = $("#tarea_NUMERO_X").clone();
+                $(nuevaTarea).html($(nuevaTarea).html().replace(/NUMERO_X/g, jsonTarea.id));
+                $(nuevaTarea).attr("id", $(nuevaTarea).attr("id").replace(/NUMERO_X/g, jsonTarea.id));
+                $(nuevaTarea).attr("onclick", "mostrarDetalle(" + jsonTarea.id + ")");
+                $(nuevaTarea).css("display", "");
+                $(nuevaTarea).appendTo("#etapa_" + jsonEtapa.id);
+
+                $("#tarea_" + jsonTarea.id + "_tit_span").html(jsonTarea.titulo);
+                $("#tarea_" + jsonTarea.id + "_familia").val(jsonTarea.familia);
+                cambiarColorCard(jsonTarea.id, familiaAColor(jsonTarea.familia));
+                $("#tarea_" + jsonTarea.id + "_des_span").html(jsonTarea.descripcion);
+
+                // Si se tiene abierto el detalle de la tarea, se modifica la información que se muestra...
+                if (jsonTarea.id == $("#detalleID").val()) {
+                    if ($("#detalleTextoTitulo").html() == jsonTarea.titulo &&
+                        $("#detalleTextoDescripcion").html() == jsonTarea.descripcion &&
+                        ($("#contenedorDetalleFamilia").length == 0 ||
+                        $("#contenedorDetalleFamilia").css("background-color") == familiaAColor(jsonTarea.familia))) {
+                        // La tarea no sufrió cambios...
+                    } else {
+                        // La tarea sufrió cambios...
+                        $("#detalleTextoTitulo").html(jsonTarea.titulo);
+                        $("#detalleTextoDescripcion").html(jsonTarea.descripcion);
+                        if ($("#contenedorDetalleFamilia").length > 0 && $("#contenedorDetalleFamilia").css("display") == "none") {
+                            $("#contenedorDetalleFamilia").css("background-color", familiaAColor(jsonTarea.familia));
+                        }
+
+                        if ($("#contenedorDetalleFamilia").length > 0 && $("#contenedorDetalleFamilia").css("display") != "none") {
+                            $("#alertaTareaModificada").css("display", "");
+                        }
+                    }
+                }
+            }
+        }
+        if (jsonMuro.permiso < 3) {
+            $(".etapa").sortable(optionSortable);
+        }
+
+        // Si se tiene abierto el detalle...
+        if ($("#detalleTarea").data('bs.modal') && $("#detalleTarea").data('bs.modal')._isShown) {
+            // Y no se está modificando/creando una tarea...
+            if ($("#contenedorDetalleFamilia").length == 0 || $("#contenedorDetalleFamilia").css("display") == "none") {
+                // Y la tarea no existe...
+                var id = $("#detalleID").val();
+                if ($("#tarea_" + id).length == 0) {
+                    // Se oculta el detalle de la tarea...
+                    $("#detalleTarea").modal("hide");
+                }
+            }
+        }
+
+        $(window).scrollTop(posScroll);
+        $(".scrollbar").scrollTop(posScrollTable);
+    }
+
+    function recargarInfoTarea() {
+        var id = $("#detalleID").val();
+        var titulo = $("#tarea_" + id + "_tit_span").html();
+        var descripcion = $("#tarea_" + id + "_des_span").html();
+        var familia = parseInt($("#tarea_" + id + "_familia").val(), 10);
+
+        $("#detalleInputTitulo").val(titulo.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+        $("#detalleInputDescripcion").val(descripcion.replace(/\&lt\;/g, "<").replace(/\&gt\;/g, ">"));
+        $("#contenedorDetalleFamilia").css("background-color", familiaAColor(familia));
+        $("#alertaTareaModificada").css("display", "none");
+    }
+
+    function mostrarDetalle(id) {
+        var titulo = $("#tarea_" + id + "_tit_span").html();
+        var descripcion = $("#tarea_" + id + "_des_span").html();
+        var familia = parseInt($("#tarea_" + id + "_familia").val(), 10);
+        var idEtapa = $("#tarea_" + id).parent("td").attr("id").split("_")[1];
+
+        $("#detalleID").val(id);
+        $("#detalleID").attr("idEtapa", idEtapa);
+        
+        $("#detalleTextoTitulo").css("display", "inline");
+        $("#detalleTextoTitulo").html(titulo);
+        $("#detalleInputTitulo").css("display", "none");
+        
+        $("#detalleTextoDescripcion").css("display", "inline");
+        $("#detalleTextoDescripcion").html(descripcion);
+        $("#detalleInputDescripcion").css("display", "none");
+
+        $("#contenedorDetalleFamilia").css("background-color", familiaAColor(familia));
+        $("#contenedorDetalleFamilia").css("display", "none");
+
+        $("#detalleBotonesPrincipales").css("display", "inline");
+        $("#detalleBotonesEdicion").css("display", "none");
+
+        $("#detalleTarea").modal("show");
+    }
+
+    function colorAFamilia(color) {
+        switch (color) {
+            case "rgb(26, 188, 156)":
+                return 1;
+            case "rgb(46, 204, 113)":
+                return 2;
+            case "rgb(39, 174, 96)":
+                return 3;
+            case "rgb(52, 152, 219)":
+                return 4;
+
+            case "rgb(41, 128, 185)":
+                return 5;
+            case "rgb(155, 89, 182)":
+                return 6;
+            case "rgb(241, 196, 15)":
+                return 7;
+            case "rgb(243, 156, 18)":
+                return 8;
+
+            case "rgb(230, 126, 34)":
+                return 9;
+            case "rgb(231, 76, 60)":
+                return 10;
+            case "rgb(149, 165, 166)":
+                return 11;
+            default:
+                return 12;
+        }
+    }
+
+    function colorStringToRGBNumbers(colorString) {
+        var rgb = new Array();
+        rgb[0] = 189; 
+        rgb[1] = 195;
+        rgb[2] = 199;
+
+        if (colorString.indexOf("rgb") != -1) {
+            colorString = colorString.replace(/rgb\(/g, "");
+            colorString = colorString.replace(/\)/g, "");
+            var listaNumeros = colorString.split(",").map(function (parametro) {
+                return parseInt(parametro.trim(), 10);
+            });
+
+            if (listaNumeros.length >= 1) {
+                rgb[0] = listaNumeros[0];
+            }
+            if (listaNumeros.length >= 2) {
+                rgb[1] = listaNumeros[1];
+            }
+            if (listaNumeros.length >= 3) {
+                rgb[2] = listaNumeros[2];
+            }
+        } else {
+            if (colorString.indexOf("#") != -1) {
+                var strRed = colorString.substr(1, 2);
+                var strGreen = colorString.substr(3, 2);
+                var strBlue = colorString.substr(5, 2);
+
+                if (strRed.length > 0) {
+                    rgb[0] = parseInt(strRed, 16);
+                }
+                if (strGreen.length > 0) {
+                    rgb[1] = parseInt(strGreen, 16);
+                }
+                if (strBlue.length > 0) {
+                    rgb[2] = parseInt(strBlue, 16);
+                }
+            }
+        }
+
+        return rgb;
+    }
+
+    function familiaAColor(familia) {
+        switch (familia) {
+            case 1:
+                return "rgb(26, 188, 156)";
+            case 2:
+                return "rgb(46, 204, 113)";
+            case 3:
+                return "rgb(39, 174, 96)";
+            case 4:
+                return "rgb(52, 152, 219)";
+
+            case 5:
+                return "rgb(41, 128, 185)";
+            case 6:
+                return "rgb(155, 89, 182)";
+            case 7:
+                return "rgb(241, 196, 15)";
+            case 8:
+                return "rgb(243, 156, 18)";
+
+            case 9:
+                return "rgb(230, 126, 34)";
+            case 10:
+                return "rgb(231, 76, 60)";
+            case 11:
+                return "rgb(149, 165, 166)";
+            default:
+                return "rgb(189, 195, 199)";
+        }
+    }
+
+    function masClaro(color) {
+        var rgb = colorStringToRGBNumbers(color);
+        for (var i = 0; i < rgb.length; i++) {
+            rgb[i] = (rgb[i] + 10 > 255) ? 255 : rgb[i] + 10;
+        }
+
+        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
+    }
+
+    function masOscuro(color) {
+        var rgb = colorStringToRGBNumbers(color);
+        for (var i = 0; i < rgb.length; i++) {
+            rgb[i] = (rgb[i] - 10 < 0) ? 0 : rgb[i] - 10;
+        }
+
+        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
+    }
+    
+    function cambiarColorCard(id, color) {
+        $("#tarea_" + id + " .card-header").css("background-color", color);
+        $("#tarea_" + id + " .card-header").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id + " .card-body").css("background-color", masClaro(color));
+        $("#tarea_" + id + " .card-body").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id + " .card-footer").css("background-color", color);
+        $("#tarea_" + id + " .card-footer").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id).css("background-color", color);
+        $("#tarea_" + id).css("border-color", masOscuro(color));
+    }
+
+    function cambiarColorCard(id, red, green, blue) {
+        var color = "rgb(" + red + ", " + green + ", " + blue + ")";
+
+        $("#tarea_" + id + " .card-header").css("background-color", color);
+        $("#tarea_" + id + " .card-header").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id + " .card-body").css("background-color", masClaro(color));
+        $("#tarea_" + id + " .card-body").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id + " .card-footer").css("background-color", color);
+        $("#tarea_" + id + " .card-footer").css("border-color", masOscuro(color));
+
+        $("#tarea_" + id).css("background-color", color);
+        $("#tarea_" + id).css("border-color", masOscuro(color));
+    }
+</script>

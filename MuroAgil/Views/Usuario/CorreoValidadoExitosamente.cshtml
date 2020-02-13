@@ -1,0 +1,16 @@
+﻿@{
+    ViewBag.Title = "Verificación Exitosa - Muro Ágil";
+}
+
+<div class="card text-white bg-success" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header">
+        <strong>¡Correo Verificado!</strong>
+    </div>
+    <div class="card-body text-dark bg-light">
+        <p class="card-text">
+            Tu dirección de correo electrónico ha sido verificada exitosamente.<br />
+            <b>Ahora puedes iniciar sesión, y utilizar todas las herramientas que Muro Ágil tiene para ti.</b>
+        </p>
+        <a asp-controller="Usuario" asp-action="IniciarSesion" style="margin-top: 10px; width: 100%;" class="btn btn-success btn-sm float-right">Ir al Inicio de Sesión...</a>
+    </div>
+</div>

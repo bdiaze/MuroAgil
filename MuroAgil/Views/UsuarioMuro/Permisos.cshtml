@@ -1,0 +1,419 @@
+﻿@using MuroAgil.Models
+@model Muro
+
+@{
+    ViewData["Title"] = "Permisos - " + Model.Nombre + " - Muro Ágil";
+    var usuarioMuroAux = new UsuarioMuro();
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="UsuarioMuro" asp-action="Index">Mis Muros</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Permisos - @Model.Nombre</li>
+    </ol>
+</nav>
+
+<div class="card border-primary">
+    <div class="card-header text-white bg-primary align-items-center">
+        <strong>Permisos - @Model.Nombre</strong>
+    </div>
+    <div class="card-body" style="width: 100%;">
+        <input type="button" onClick="confirmarAgregacion()" class="btn btn-success" value="Otorgar Permiso" style="width: 10em; float: right; margin: 0px 0px 15px;" />
+
+        <table class="table table-bordered table-striped" style="margin-bottom: 0px;">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Permiso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    bool algunPermiso = false;
+                }
+                
+                @foreach (var usuarioMuro in Model.UsuarioMuro) {
+                    if (usuarioMuro.Permiso != 1) {
+                        algunPermiso = true;
+                        <tr>
+                            <td>@usuarioMuro.IdDuennoNavigation.Correo</td>
+                            <td>@usuarioMuro.IdDuennoNavigation.Nombre</td>
+                            <td>@usuarioMuro.NombrePermiso()</td>
+                            <td>
+                                <button type="button" onClick="confirmarModificacion(@usuarioMuro.IdDuenno, @usuarioMuro.IdMuro, @usuarioMuro.Permiso, '@usuarioMuro.IdDuennoNavigation.Correo', '@usuarioMuro.IdDuennoNavigation.Nombre')" class="btn btn-warning" data-dismiss="modal" style="width: 6em; font-size: 12px; padding: 3px 8px;">Modificar</button>
+                                <button type="button" onClick="confirmarEliminacion(@usuarioMuro.IdDuenno, @usuarioMuro.IdMuro)" class="btn btn-danger" data-dismiss="modal" style="width: 6em; font-size: 12px; padding: 3px 8px;">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+
+                @if (!algunPermiso) {
+                    <tr>
+                        <td colspan="4" align="center">Su muro no está siendo compartido con otros usuarios.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="agregarPermiso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Otorgamiento de un Permiso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input id="usuarioAgregacion" class="form-control mb-3" maxlength="255" placeholder="Nombre de Usuario..." />
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" style="min-width: 90px;" for="selectPermisoAgregacion">Permiso:</label>
+                        </div>
+                        <select id="selectPermisoAgregacion" class="custom-select">
+                            @foreach (var valorNombre in usuarioMuroAux.NombresPermisos()) {
+                                if (valorNombre.valor != 1) {
+                                    <option value="@valorNombre.valor">@valorNombre.nombre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <input id="idMuroAgregacion" type="hidden" value="@Model.Id"/>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;" onclick="agregarPermiso()">Otorgar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Otorgamiento en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo el otorgamiento del nuevo permiso, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoExitoso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Otorgamiento Exitoso!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El permiso ha sido otorgado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="grabadoFallido" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en el Otorgamiento!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al otorgar el permiso, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificarPermiso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modificación de un Permiso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" style="min-width: 90px;" for="usuarioModificacion">Usuario:</label>
+                    </div>
+                    <input id="usuarioModificacion" class="form-control" disabled />
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" style="min-width: 90px;" for="nombreModificacion">Nombre:</label>
+                    </div>
+                    <input id="nombreModificacion" class="form-control" disabled />
+                </div>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" style="min-width: 90px;" for="selectPermiso">Permiso:</label>
+                    </div>
+                    <select id="selectPermiso" class="custom-select">
+                        @foreach (var valorNombre in usuarioMuroAux.NombresPermisos()) {
+                            if (valorNombre.valor != 1) {
+                                <option value="@valorNombre.valor">@valorNombre.nombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <input id="idUsuarioModificacion" type="hidden" />
+                <input id="idMuroModificacion" type="hidden" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button type="button" class="btn btn-warning" data-dismiss="modal" style="width: 8em;" onclick="modificarPermiso()">Modificar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modificación en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la modificación del permiso seleccionado, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionExitosa" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Modificación Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El permiso ha sido modificado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modificacionFallida" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Modificación!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al modificar el permiso, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="seguroEliminar" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Atención! Eliminación en Proceso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea eliminar el permiso seleccionado?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="width: 8em;">Cancelar</button>
+                <button id="aceptarEliminacion" type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminacionEnProceso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-toggle="modal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Eliminación en Proceso...</h5>
+            </div>
+            <div class="modal-body">
+                Se está llevando a cabo la eliminación del permiso seleccionado, espere por favor.
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminadoExitoso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Eliminación Exitosa!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                El permiso ha sido eliminado exitosamente.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="eliminadoFallido" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Error en la Eliminación!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Hubo un error al eliminar el permiso seleccionado, intente más tarde.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" style="width: 8em;">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#grabadoExitoso").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $("#modificacionExitosa").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    $("#eliminadoExitoso").on("hidden.bs.modal", function () {
+        location.reload();
+    });
+
+    function confirmarAgregacion() {
+        $("#usuarioAgregacion").val("");
+        $("#selectPermisoAgregacion").val("3");
+        $('#agregarPermiso').modal('show');
+    }
+
+    function agregarPermiso() {
+        var idMuro = $("#idMuroAgregacion").val();
+        var usuario = $("#usuarioAgregacion").val();
+        var permiso = $("#selectPermisoAgregacion").val();
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#grabadoEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#grabadoExitoso").modal("show");
+                } else {
+                    $("#grabadoFallido").modal("show");
+                }
+            }
+        };
+        xhttp.open("POST", "/UsuarioMuro/OtorgarPermiso", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $("#grabadoEnProceso").modal("show");
+        xhttp.send("idMuro=" + encodeURIComponent(idMuro) + "&usuario=" + encodeURIComponent(usuario) + "&permiso=" + encodeURIComponent(permiso));
+    }
+
+    function confirmarModificacion(idUsuario, idMuro, permiso, usuario, nombre) {
+        $("#idUsuarioModificacion").val(idUsuario);
+        $("#idMuroModificacion").val(idMuro);
+        $("#selectPermiso").val(permiso);
+        $("#usuarioModificacion").val(usuario);
+        $("#nombreModificacion").val(nombre);
+        $("#modificarPermiso").modal("show");
+    }
+
+    function modificarPermiso() {
+        var idUsuario = $("#idUsuarioModificacion").val();
+        var idMuro = $("#idMuroModificacion").val();
+        var permiso = $("#selectPermiso").val();
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#modificacionEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#modificacionExitosa").modal("show");
+                } else {
+                    $("#modificacionFallida").modal("show");
+                }
+            }
+        };
+        xhttp.open("POST", "/UsuarioMuro/ModificarPermiso", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $("#modificacionEnProceso").modal("show");
+        xhttp.send("idUsuario=" + encodeURIComponent(idUsuario) + "&idMuro=" + encodeURIComponent(idMuro) + "&permiso=" + encodeURIComponent(permiso));
+    }
+
+    function confirmarEliminacion(idUsuario, idMuro) {
+        $("#aceptarEliminacion").unbind("click").click(function () {
+            eliminarMuro(idUsuario, idMuro);
+        });
+        $("#seguroEliminar").modal("show");
+    }
+
+    function eliminarMuro(idUsuario, idMuro) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                $("#eliminacionEnProceso").modal("hide");
+                if (this.status == 200) {
+                    $("#eliminadoExitoso").modal("show");
+                } else {
+                    $("#eliminadoFallido").modal("show");
+                }
+            }
+        }
+        xhttp.open("POST", "/UsuarioMuro/EliminarPermiso", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        $("#eliminacionEnProceso").modal("show");
+        xhttp.send("idUsuario=" + encodeURIComponent(idUsuario) + "&idMuro=" + encodeURIComponent(idMuro));
+    }
+</script>

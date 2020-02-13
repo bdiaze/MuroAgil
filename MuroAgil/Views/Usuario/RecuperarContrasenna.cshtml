@@ -1,0 +1,28 @@
+﻿@model MuroAgil.ViewModels.Usuario.RecuperarContrasennaViewModel
+@{
+    ViewBag.Title = "Recuperar Contraseña - Muro Ágil";
+}
+
+<div class="card border-primary" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header text-white bg-primary">
+        <strong>¡Recuperar Contraseña!</strong>
+    </div>
+    <div class="card-body">
+        <form asp-action="RecuperarContrasenna" method="post">
+            <p class="card-text">
+                <b>¡Oh no!, ¿Has olvidado tu contraseña?</b><br/>
+                <br/>
+                No te preocupes, el equipo de Muro Ágil te ayudará a recuperarla. 
+                Ingresa tu correo electrónico a continuación, y te haremos llegar 
+                un conjunto de instrucciones para crear una nueva contraseña.
+            </p>
+            <div class="form-group">
+                <label asp-for="Correo"></label>
+                <input class="form-control" asp-for="Correo" type="email" />
+                <span asp-validation-for="Correo"></span>
+            </div>
+            <input type="submit" style="width: 100%;" class="btn btn-success float-right" value="Recuperar Contraseña" />
+        </form>
+    </div>
+</div>
+

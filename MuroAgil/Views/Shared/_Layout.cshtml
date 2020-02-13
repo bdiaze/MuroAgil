@@ -1,0 +1,78 @@
+﻿@using MuroAgil.Models
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Language" content="es" />
+    <title>@ViewBag.Title</title>
+    <meta name="description" content="Organiza las tareas que debes llevar a cabo mediante un tablero al estilo Scrum. Crea diversos muros ágiles para separar tus tareas por temas, administra las etapas por las que éstas se moverán, y disfruta de los beneficios de trabajar con metodologías ágiles." />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js"></script>
+    <script src="~/Content/js/customValidation.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.11/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="~/Content/Pen/js/pen.js"></script>
+    <script src="~/Content/Pen/js/markdown.js"></script>
+    <script src="~/Content/ColorPick/colorPick.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.10.19/sorting/datetime-moment.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="~/Content/Pen/css/pen.css" />
+    <link rel="stylesheet" href="~/Content/ColorPick/colorPick.css" />
+    <link rel="stylesheet" href="~/Content/css/disenno.css" />
+
+    <meta name="google-site-verification" content="tInCOGXxEF12vZ5pegq5sVHJ1F8vSDKI-26STtdNp9g" />
+
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+</head>
+    <body style="cursor: auto;">
+        <div class="container-fluid">
+            <a style="text-decoration: none;" asp-controller="UsuarioMuro" asp-action="Index">
+                <h1 style="text-align: center; font-size: 400%; padding-top: 25px; font-weight: bold; color: #007bff;">Muro Ágil</h1>
+            </a>
+            <nav class="navbar navbar-dark bg-primary rounded">
+                <strong class="navbar-brand">Menú</strong>
+                @if (User.Identity.IsAuthenticated) {
+                    <span class="navbar-text text-center px-0" style="color: #fff; overflow-x: hidden; white-space: nowrap; max-width: calc(100vw - 230px)">Bienvenid@@, @User.Identity.Name</span>
+                }
+                <button class="navbar-toggler mr-1 ml-3" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="margin-top: 7px; border-top: 1px solid rgb(26, 136, 255);">
+                    <div class="navbar-nav">
+                        @if (User.Identity.IsAuthenticated) {
+                            <a class="nav-item nav-link" asp-controller="UsuarioMuro" asp-action="Index">Mis Muros</a>
+                            <a class="nav-item nav-link" asp-controller="Usuario" asp-action="EditarCuenta">Editar Cuenta</a>
+                            <a class="nav-item nav-link" asp-controller="Usuario" asp-action="CerrarSesion">Cerrar Sesión</a>
+                        } else {
+                            <a class="nav-item nav-link" asp-controller="Usuario" asp-action="IniciarSesion">Iniciar Sesión</a>
+                            <a class="nav-item nav-link" asp-controller="Usuario" asp-action="Registrarse">Registrarse</a>
+                            <a class="nav-item nav-link" asp-controller="Usuario" asp-action="RecuperarContrasenna">Recuperar Contraseña</a>
+                        }
+                    </div>
+                </div>
+            </nav>
+
+            <script type="text/javascript">
+                $("a.disabled").click(function () {
+                    return false;
+                });
+                $('a.active').removeClass('active');
+                $('a[href="' + location.pathname + '"]').addClass('active');
+            </script>
+            <div style="margin-top:20px"></div>
+
+            @RenderBody()
+
+        </div>
+    </body>
+</html>

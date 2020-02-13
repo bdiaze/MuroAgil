@@ -1,0 +1,109 @@
+﻿.card {
+    margin-bottom: 15px;
+}
+
+.detalleTareaEditable {
+    cursor: pointer;
+}
+
+.tareaCard span{
+    display: inline;
+    width: 100%;
+    white-space: pre-line;
+}
+
+.tareaCard .card-header {
+    font-weight: bold;
+}
+
+.tareaCard .card-header input {
+    text-align: center;
+    display: none;
+    width: 100%;
+}
+
+.tareaCard .card-body div{
+    max-height: 107px;
+    overflow-y: hidden;
+}
+
+.tareaCard textarea {
+    display: none;
+    width: 100%;
+}
+
+.tareaCard .masMenos {
+    font-size: 11px;
+    float: right;
+    padding: 3px 10px;
+    margin-top: 10px;
+    width: 5em;
+    display: none;
+}
+
+.tareaCard .card-footer {
+    display: none;
+}
+
+.tareaCard .card-footer .btn {
+    width: 6em;
+    float: right;
+    font-size: 12px;
+    padding: 3px 8px
+}
+
+#detalleTarea #detalleInputTitulo, #detalleTarea #detalleInputDescripcion, #detalleTarea #detalleBotonesEdicion {
+    display: none;
+}
+
+#detalleTarea #detalleTextoTitulo, #detalleTarea #detalleTextoDescripcion {
+    white-space: pre-line;
+}
+
+.scrollbar {
+    margin-left: 0px;
+    margin-right: 0px;
+    padding-right: 0px;
+    padding-left: 0px;
+    float: left;
+    /*max-height: calc(100vh - 120px);*/
+    width: inherit;
+    background: #fff;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+
+/*
+.scrollbar-primary::-webkit-scrollbar {
+    width: 12px;
+    background-color: #F5F5F5;
+    border-radius: 10px;
+}
+
+.scrollbar-primary::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+    background-color: #4285F4;
+}
+*/
+
+.btn-warning, .btn-warning:hover, .btn-warning.disabled, .btn-warning:disabled, .btn-warning:not(:disabled):not(.disabled):active, .btn-warning:not(:disabled):not(.disabled).active {
+    color: #fff;
+}
+
+.colorPickSelector {
+    border-radius: 5px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    -webkit-transition: all linear .2s;
+    -moz-transition: all linear .2s;
+    -o-transition: all linear .2s;
+    transition: all linear .2s;
+    z-index: 2500 !important;
+}
+
+.colorPickSelector:hover {
+    transform: scale(1.1);
+}

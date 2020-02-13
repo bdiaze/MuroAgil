@@ -1,0 +1,19 @@
+﻿@using MuroAgil.Models
+@model ListaRelacionesIds
+@{
+    Layout = null;
+}
+@{
+    bool seAgregoUno = false;
+    string strRelacion;
+}
+@foreach (RelacionIds relacion in Model.ListaRelaciones) {
+    if (seAgregoUno) {
+        strRelacion = "|";
+    } else {
+        strRelacion = "";
+        seAgregoUno = true;
+    }
+    strRelacion += relacion.PseudoId + "-" + relacion.TareaReal.Id;
+    @strRelacion
+}

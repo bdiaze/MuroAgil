@@ -1,0 +1,49 @@
+﻿@model MuroAgil.Models.IniciarSesionViewModel
+
+@{
+    ViewBag.Title = "Iniciar Sesión - Muro Ágil";
+}
+
+<div class="card border-primary" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header text-white bg-primary">
+        <strong>¡Iniciar Sesión!</strong>
+    </div>
+    <div class="card-body">
+        <form asp-action="IniciarSesion" method="post">
+            <div class="form-group">
+                <label asp-for="Codigo"></label>
+                <input class="form-control" asp-for="Codigo" />
+                <span asp-validation-for="Codigo"></span>
+            </div>
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label asp-for="Contrasenna"></label>
+                <input class="form-control" asp-for="Contrasenna" type="password" />
+                <span asp-validation-for="Contrasenna"></span>
+            </div>
+            <div style="text-align: center;">
+                <div data-callback="habilitarSubmit" data-expired-callback="deshabilitarSubmit" style="display: inline-block;" class="g-recaptcha" data-sitekey="@ViewBag.GoogleReCaptchaClientKey"></div>
+            </div>
+            <input id="botonSubmit" disabled="disabled" type="submit" style="margin-top: 15px; margin-bottom: 15px; width: 100%;" class="btn btn-success float-right" value="Iniciar Sesión" />
+            <table style="width: 100%;">
+                <tr>
+                    <td style="text-align: center; width: 50%;">
+                        <a class="text-secondary" style="font-size: 0.85rem; text-decoration: underline;" asp-controller="Usuario" asp-action="Registrarse">¡Registrarse!</a>
+                    </td>
+                    <td style="text-align: center; width: 50%;">
+                        <a class="text-secondary" style="font-size: 0.85rem; text-decoration: underline;" asp-controller="Usuario" asp-action="RecuperarContrasenna">Recuperar Contraseña</a>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+<script>
+    function habilitarSubmit(response) {
+        $("#botonSubmit").removeAttr("disabled");
+    }
+
+    function deshabilitarSubmit() {
+        $("#botonSubmit").attr("disabled", "disabled");
+    }
+</script>

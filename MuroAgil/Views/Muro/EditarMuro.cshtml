@@ -1,0 +1,179 @@
+﻿@using MuroAgil.Models
+@model EditarMuroViewModel
+
+@{
+    ViewData["Title"] = "Editar Muro - Muro Ágil";
+    string textoAceptar = "Crear Muro";
+    if (Model.Id != 0) {
+        textoAceptar = "Editar Muro";
+    }
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="UsuarioMuro" asp-action="Index">Mis Muros</a></li>
+        @if (Model.Id != 0) {
+            <li class="breadcrumb-item active" aria-current="page">Editar Muro - @Model.Nombre</li>
+        } else {
+            <li class="breadcrumb-item active" aria-current="page">Crear Muro</li>
+        }
+    </ol>
+</nav>
+
+<div class="card border-primary" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header text-white bg-primary align-items-center">
+        @if (Model.Id != 0) {
+            <strong>Editar Muro - @Model.Nombre</strong>
+        } else {
+            <strong>Crear Muro</strong>
+        }
+    </div>
+    <div class="card-body" style="width: 100%;">
+        <form asp-action="EditarMuro" method="post">
+            <div class="form-group">
+                <b><label asp-for="Nombre"></label></b>
+                <input id="inputNombreMuro" class="form-control" asp-for="Nombre" placeholder="Nombre del Muro..." />
+                <span asp-validation-for="Nombre"></span>
+                <input type="hidden" asp-for="Id" />
+            </div>
+            <table class="table table-bordered" style="width: 100%; margin: 0px; padding-bottom: 0px; background: rgb(255, 255, 255);">
+                <thead>
+                    <tr>
+                        <th style="text-align: center; color: #404040; vertical-align: middle; font-size: small;">
+                            <div style="display: inline; vertical-align: middle;">ETAPAS</div>
+                            <div style="float: right; display: inline;">
+                                <button type="button" style="" class="btn btn-success px-2 pt-0 pb-1" onclick="agregarEtapa()"><b>+</b></button>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th id="contEtapas">
+                            @{ int indexDisp = -1; }
+                            @foreach (var etapa in Model.Etapas) {
+                                int indexEtapa = etapa.Id;
+                                if (indexEtapa == 0) {
+                                    indexEtapa = indexDisp;
+                                    indexDisp--;
+                                }
+
+                                <div id="etapa_@indexEtapa" class="etapa card sortable text-left p-0  m-2" style="font-size: small; cursor: pointer;">
+                                    <div class="card-header text-center py-2 px-4">
+                                        <input type="hidden" name="Etapas.Index" value="@indexEtapa"/>
+                                        <input type="hidden" name="Etapas[@indexEtapa].Id" value="@etapa.Id" />
+                                        <div class="input-group">
+                                            <input type="text" name="Etapas[@indexEtapa].Nombre" value="@etapa.Nombre" class="form-control" placeholder="Nombre de la Etapa..." required />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-danger" onclick="eliminarEtapa(@indexEtapa)"><b>X</b></button>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="Etapas[@indexEtapa].Posicion" value="@etapa.Posicion" />
+                                    </div>
+                                </div>
+                            }
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div id="eliminoEtapa" class="card border-danger" style="margin-top: 15px; margin-bottom: 0px; display: none;">
+                <div class="card-header text-light bg-danger">
+                    <strong>Etapa Eliminada</strong>
+                </div>
+                <div class="card-body" style="width: 100%; padding-bottom: 5px;">
+                    <label>¿Qué desea hacer con las tareas que se encontraban en la etapa eliminada?</label>
+                    <div class="form-group">
+                        <select class="custom-select" asp-for="AccionTareas" required>
+                            <option value="1" selected>Mover las tareas a la primera etapa.</option>
+                            <option value="2">Mover las tareas a la última etapa.</option>
+                            <option value="3">Eliminar las tareas del muro.</option>
+                        </select>
+                        <span asp-validation-for="AccionTareas"></span>
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" style="width: 100%; margin-top: 15px;" class="btn btn-success float-right" value="@textoAceptar" />
+        </form>
+    </div>
+</div>
+
+<div id="etapa_INDEX_ETAPA" class="etapa card sortable text-left p-0  m-2" style="font-size: small; cursor: pointer; display: none;">
+    <div class="card-header text-center py-2 px-4">
+        <input type="hidden" name="Etapas.Index" value="INDEX_ETAPA" />
+        <input type="hidden" name="Etapas[INDEX_ETAPA].Id" value="0" />
+        <div class="input-group">
+            <input type="text" name="Etapas[INDEX_ETAPA].Nombre" class="form-control" placeholder="Nombre de la Etapa..." required />
+            <div class="input-group-append">
+                <button type="button" class="btn btn-danger" onclick="eliminarEtapa(INDEX_ETAPA)"><b>X</b></button>
+            </div>
+        </div>
+        <input type="hidden" name="Etapas[INDEX_ETAPA].Posicion" value="0" />
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var optionSortable = {
+            connectWith: "#contEtapas",
+            cursor: "pointer",
+            revert: false,
+            scroll: true,
+            scrollSpeed: 10,
+            containment: "#contEtapas",
+            tolerance: "pointer",
+            update: function (event, ui) {
+                if (this === ui.item.parent()[0]) {
+                    recalcularPosiciones();
+                }
+            }
+        };
+        $("#contEtapas").sortable(optionSortable);
+
+        $("#inputNombreMuro").select();
+    });
+
+    function agregarEtapa() {
+        var valorIndexPos = obtenerIndexPosDisponible();
+        var indexDisponible = valorIndexPos[0];
+        var posDisponible = valorIndexPos[1];
+
+        var nuevaEtapa = $("#etapa_INDEX_ETAPA").clone();
+        $(nuevaEtapa).html($(nuevaEtapa).html().replace(/INDEX_ETAPA/g, indexDisponible));
+        $(nuevaEtapa).attr("id", $(nuevaEtapa).attr("id").replace(/INDEX_ETAPA/g, indexDisponible));
+        $(nuevaEtapa).css("display", "");
+        $(nuevaEtapa).appendTo("#contEtapas");
+        $("input[name='Etapas[" + indexDisponible + "].Posicion']").val(posDisponible);
+        $("input[name='Etapas[" + indexDisponible + "].Nombre']").select();
+    }
+
+    function eliminarEtapa(indexEtapa) {
+        var id = $("input[name='Etapas[" + indexEtapa + "].Id']").val();
+        $("#etapa_" + indexEtapa).remove();
+        recalcularPosiciones();
+        if (id != 0) {
+            $("#eliminoEtapa").css("display", "");
+        }
+    }
+
+    function obtenerIndexPosDisponible() {
+        var indexDisp = -1;
+        var ultPos = 1;
+        $("#contEtapas .etapa").each(function (index) {
+            var indexId = $(this).attr("id").split("_")[1];
+            if (indexId <= indexDisp) {
+                indexDisp = indexId - 1;
+            }
+            ultPos = index + 1;
+        });
+        return [indexDisp, ultPos + 1];
+    }
+
+    function recalcularPosiciones() {
+        $("#contEtapas .etapa").each(function (index) {
+            var id = $(this).find("input[name='Etapas.Index']").val();
+            $(this).find("input[name='Etapas[" + id + "].Posicion']").val(index + 1);
+        });
+    }
+</script>

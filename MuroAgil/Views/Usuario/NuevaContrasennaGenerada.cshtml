@@ -1,0 +1,18 @@
+﻿@{
+    ViewBag.Title = "Contraseña Generada - Muro Ágil";
+}
+
+<div class="card text-white bg-success" style="max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+    <div class="card-header">
+        <strong>¡Contraseña Generada!</strong>
+    </div>
+    <div class="card-body text-dark bg-light">
+        <p class="card-text">
+            <b>Se ha generado su nueva contraseña de manera exitosa.</b><br />
+            <br />
+            Te invitamos a iniciar sesión con tu nueva contraseña, y hacer uso
+            de todas las herramientas que Muro Ágil tiene para ti.
+        </p>
+        <a asp-controller="Usuario" asp-action="IniciarSesion" style="margin-top: 10px; width: 100%;" class="btn btn-success btn-sm float-right">Ir al Inicio de Sesión...</a>
+    </div>
+</div>

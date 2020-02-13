@@ -1,0 +1,10 @@
+﻿@using MuroAgil.Models
+@model Etapa
+@{ 
+    var tamanno = 100 / Int32.Parse(ViewData["Tamanno"].ToString());
+}
+<td id="etapa_@Model.Id" class="etapa" style="width:@tamanno%; min-width: 15em;">
+    @foreach (var tarea in Model.Tarea) {
+        @Html.Partial("_TareaDetalle", tarea);
+    }
+</td>
