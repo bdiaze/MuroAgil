@@ -354,12 +354,14 @@ namespace MuroAgil.Controllers {
         }
         
         private async void EnviarCorreoVerificador(Usuario usuario) {
-            string nombreAplicacion = _configuration.GetValue<string>("Correo:NombreAplicacion");
+            // string nombreAplicacion = _configuration.GetValue<string>("Correo:NombreAplicacion");
             string muroAgilEmail = _configuration.GetValue<string>("Correo:Direccion");
+            string muroAgilEmailAlias = _configuration.GetValue<string>("Correo:DireccionAlias");
             string muroAgilNombre = _configuration.GetValue<string>("Correo:Nombre");
             string servAccountEmail = _configuration.GetValue<string>("Correo:ServiceAccount:client_email");
             string servAccountPrivKey = _configuration.GetValue<string>("Correo:ServiceAccount:private_key");
-            string hostName = Request.Host.ToString();
+            string muroAgilDominio = _configuration.GetValue<string>("Correo:Dominio");
+            if (string.IsNullOrEmpty(muroAgilDominio)) muroAgilDominio = Request.Host.Value;
 
             ServiceAccountCredential credential = new ServiceAccountCredential(
                 new ServiceAccountCredential.Initializer(servAccountEmail) {
@@ -372,16 +374,16 @@ namespace MuroAgil.Controllers {
             if (gotAccessToken) {
                 GmailService service = new GmailService(
                     new BaseClientService.Initializer() {
-                        ApplicationName = nombreAplicacion,
+                        // ApplicationName = nombreAplicacion,
                         HttpClientInitializer = credential
                     }
                 );
 
-                MailAddress fromAddress = new MailAddress(muroAgilEmail, muroAgilNombre, System.Text.Encoding.UTF8);
+                MailAddress fromAddress = new MailAddress(muroAgilEmailAlias, muroAgilNombre, System.Text.Encoding.UTF8);
                 MailAddress toAddress = new MailAddress(usuario.Correo, usuario.Nombre, System.Text.Encoding.UTF8);
                 MailMessage message = new MailMessage(fromAddress, toAddress) {
                     Subject = "Verificación de Correo Electrónico - Muro Ágil",
-                    Body = CuerpoCorreo.getCuerpoVerificacion(usuario.Correo, usuario.Nombre, usuario.TokenVerificador, hostName),
+                    Body = CuerpoCorreo.getCuerpoVerificacion(usuario.Correo, usuario.Nombre, usuario.TokenVerificador, muroAgilDominio),
                     SubjectEncoding = Encoding.UTF8,
                     HeadersEncoding = Encoding.UTF8,
                     BodyEncoding = Encoding.UTF8,
@@ -400,12 +402,14 @@ namespace MuroAgil.Controllers {
         }
 
         private async void EnviarCorreoRecuperacion(Usuario usuario) {
-            string nombreAplicacion = _configuration.GetValue<string>("Correo:NombreAplicacion");
+            // string nombreAplicacion = _configuration.GetValue<string>("Correo:NombreAplicacion");
             string muroAgilEmail = _configuration.GetValue<string>("Correo:Direccion");
+            string muroAgilEmailAlias = _configuration.GetValue<string>("Correo:DireccionAlias");
             string muroAgilNombre = _configuration.GetValue<string>("Correo:Nombre");
             string servAccountEmail = _configuration.GetValue<string>("Correo:ServiceAccount:client_email");
             string servAccountPrivKey = _configuration.GetValue<string>("Correo:ServiceAccount:private_key");
-            string hostName = Request.Host.ToString();
+            string muroAgilDominio = _configuration.GetValue<string>("Correo:Dominio");
+            if (string.IsNullOrEmpty(muroAgilDominio)) muroAgilDominio = Request.Host.Value;
 
             ServiceAccountCredential credential = new ServiceAccountCredential(
                 new ServiceAccountCredential.Initializer(servAccountEmail) {
@@ -418,16 +422,16 @@ namespace MuroAgil.Controllers {
             if (gotAccessToken) {
                 GmailService service = new GmailService(
                     new BaseClientService.Initializer() {
-                        ApplicationName = nombreAplicacion,
+                        // ApplicationName = nombreAplicacion,
                         HttpClientInitializer = credential
                     }
                 );
 
-                MailAddress fromAddress = new MailAddress(muroAgilEmail, muroAgilNombre, System.Text.Encoding.UTF8);
+                MailAddress fromAddress = new MailAddress(muroAgilEmailAlias, muroAgilNombre, System.Text.Encoding.UTF8);
                 MailAddress toAddress = new MailAddress(usuario.Correo, usuario.Nombre, System.Text.Encoding.UTF8);
                 MailMessage message = new MailMessage(fromAddress, toAddress) {
                     Subject = "Recuperación de Contraseña - Muro Ágil",
-                    Body = CuerpoCorreo.getCuerpoRecuperacion(usuario.Correo, usuario.Nombre, usuario.TokenRecupContr, hostName),
+                    Body = CuerpoCorreo.getCuerpoRecuperacion(usuario.Correo, usuario.Nombre, usuario.TokenRecupContr, muroAgilDominio),
                     SubjectEncoding = Encoding.UTF8,
                     HeadersEncoding = Encoding.UTF8,
                     BodyEncoding = Encoding.UTF8,
